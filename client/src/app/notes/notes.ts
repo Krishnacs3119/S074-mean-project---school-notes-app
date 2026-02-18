@@ -1,101 +1,54 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-notes',
-  standalone: true,
-  imports: [CommonModule, FormsModule], 
   templateUrl: './notes.html',
-  styleUrl: './notes.css'
+  styleUrls: ['./notes.css']
 })
 export class NotesComponent implements OnInit {
+  // 1. Update this URL with the live link Render gives you later!
+  // For now, it points to your intended backend name.
+  private apiUrl = 'https://school-notes-api.onrender.com/api/notes'; 
+  
   notes: any[] = [];
-  
-  // Note Form Data
-  noteData = { title: '', content: '', isShared: false, createdBy: '' };
-  
-  // Tracking Variables
-  currentUser: any = null;
-  editingId: string | null = null; // If this has an ID, we are in Edit Mode
+  newNote = { title: '', content: '', role: 'student' }; // Default role
 
-  constructor(
-    private http: HttpClient, 
-    private router: Router, 
-    private cd: ChangeDetectorRef 
-  ) {}
+  constructor(private http: HttpClient) {}
 
   ngOnInit() {
-    const userString = localStorage.getItem('user');
-    if (!userString) {
-      this.router.navigate(['/']); 
-      return;
-    }
-    this.currentUser = JSON.parse(userString);
-    this.getNotes();
+    this.fetchNotes();
   }
 
-  getNotes() {
-    this.http.get(`http://localhost:3000/api/notes?role=${this.currentUser.role}`)
-      .subscribe({
-        next: (data: any) => {
-          this.notes = data; 
-          this.cd.detectChanges(); 
+  // GET: Fetch all notes from the Cloud Database
+  fetchNotes() {
+    this.http.get<any[]>(this.apiUrl).subscribe({
+      next: (data) => {
+        this.notes = data;
+        console.log('Notes loaded successfully');
+      },
+      error: (err) => console.error('Error fetching notes:', err)
+    });
+  }
+
+  // POST: Add a new note to MongoDB Atlas
+  addNote() {
+    if (this.newNote.title && this.newNote.content) {
+      this.http.post(this.apiUrl, this.newNote).subscribe({
+        next: () => {
+          this.fetchNotes(); // Refresh list
+          this.newNote = { title: '', content: '', role: 'student' }; // Reset form
         },
-        error: (err) => console.error(err)
+        error: (err) => console.error('Error adding note:', err)
       });
-  }
-
-  // Called when you click "Post Note" or "Update Note"
-  submitNote() {
-    if (this.editingId) {
-      // EDIT MODE: Update existing note
-      this.http.put(`http://localhost:3000/api/notes/${this.editingId}`, this.noteData)
-        .subscribe(() => {
-          this.getNotes();
-          this.resetForm();
-        });
-    } else {
-      // ADD MODE: Create new note
-      this.noteData.createdBy = this.currentUser.username;
-      this.http.post('http://localhost:3000/api/notes', this.noteData)
-        .subscribe(() => {
-          this.getNotes();
-          this.resetForm();
-        });
     }
   }
 
-  // Called when you click "Edit" on a note card
-  startEditing(note: any) {
-    this.editingId = note._id; // Switch to Edit Mode
-    // Copy the note's data into the form so we can change it
-    this.noteData = { 
-      title: note.title, 
-      content: note.content, 
-      isShared: note.isShared, 
-      createdBy: note.createdBy 
-    };
-  }
-
+  // DELETE: Remove a note by ID
   deleteNote(id: string) {
-    if(confirm("Are you sure you want to delete this?")) {
-      this.http.delete(`http://localhost:3000/api/notes/${id}`)
-        .subscribe(() => {
-          this.getNotes(); 
-        });
-    }
-  }
-
-  resetForm() {
-    this.editingId = null; // Switch back to Add Mode
-    this.noteData = { title: '', content: '', isShared: false, createdBy: this.currentUser.username };
-  }
-
-  logout() {
-    localStorage.removeItem('user');
-    this.router.navigate(['/']);
+    this.http.delete(`${this.apiUrl}/${id}`).subscribe({
+      next: () => this.fetchNotes(),
+      error: (err) => console.error('Error deleting note:', err)
+    });
   }
 }

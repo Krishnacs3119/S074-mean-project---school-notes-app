@@ -1,32 +1,41 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors'); // This is the key to fixing your problem
-const routes = require('./routes'); 
+const cors = require('cors');
 
 const app = express();
 
-// --- SECURITY SETTINGS (CORS) ---
-// This tells the browser: "It is okay to accept data from this server"
+// 1. MIDDLEWARE
 app.use(cors()); 
 app.use(express.json());
 
-// Log every request so we can see what's happening
-app.use((req, res, next) => {
-  console.log(`📡 Incoming Request: ${req.method} ${req.url}`);
-  next();
+// 2. DATABASE CONNECTION (Using your Atlas link)
+// Added 'schoolNotes' to the string to name your database
+const mongoURI = 'mongodb+srv://krishna:krishnacs3119@cluster0.blhxtqj.mongodb.net/schoolNotes?retryWrites=true&w=majority';
+
+mongoose.connect(mongoURI)
+    .then(() => console.log('✅ Connected to MongoDB Atlas Cloud'))
+    .catch(err => console.error('❌ Database connection error:', err));
+
+// 3. SAMPLE ROUTE (Adjust based on your actual routes.js)
+const noteSchema = new mongoose.Schema({
+    title: String,
+    content: String,
+    role: String,
+    date: { type: Date, default: Date.now }
+});
+const Note = mongoose.model('Note', noteSchema);
+
+app.get('/api/notes', async (req, res) => {
+    try {
+        const notes = await Note.find();
+        res.json(notes);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
 });
 
-// Connect to MongoDB
-mongoose.connect('mongodb://127.0.0.1:27017/schoolNotes')
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch(err => console.error('❌ Could not connect to MongoDB', err));
-
-// Connect our Routes
-app.use('/api', routes);
-
-// Start the Server
-const PORT = 3000;
+// 4. START SERVER (Required for Render)
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server started on port ${PORT}`);
-  console.log(`🔓 CORS Security is ENABLED (Browser should accept data now)`);
+    console.log(`🚀 Server is running on port ${PORT}`);
 });
