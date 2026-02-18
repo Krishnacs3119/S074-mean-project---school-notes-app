@@ -1,0 +1,21 @@
+<div class="login-container">
+  <div class="card">
+    <h2>{{ isRegistering ? 'Register' : 'Login' }}</h2>
+    
+    <input type="text" [(ngModel)]="username" placeholder="Username" />
+    <input type="password" [(ngModel)]="password" placeholder="Password" />
+    
+    <select *ngIf="isRegistering" [(ngModel)]="role">
+      <option value="student">Student</option>
+      <option value="teacher">Teacher</option>
+    </select>
+
+    <button (click)="authenticate()">
+      {{ isRegistering ? 'Sign Up' : 'Login' }}
+    </button>
+
+    <p (click)="isRegistering = !isRegistering" class="toggle-text">
+      {{ isRegistering ? 'Already have an account? Login' : 'Need an account? Register' }}
+    </p>
+  </div>
+</div>
