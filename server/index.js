@@ -1,41 +1,32 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
+const cors = require('cors'); // CORS add kiya request block hone se bachane ke liye
+require('dotenv').config();
 
 const app = express();
+const PORT = process.env.PORT || 10000;
 
-// 1. MIDDLEWARE
-app.use(cors()); 
+// Middleware
+app.use(cors()); // Ye line Netlify se connection allow karegi
 app.use(express.json());
 
-// 2. DATABASE CONNECTION (Using your Atlas link)
-// Added 'schoolNotes' to the string to name your database
-const mongoURI = 'mongodb+srv://krishna:krishnacs3119@cluster0.blhxtqj.mongodb.net/schoolNotes?retryWrites=true&w=majority';
+// MongoDB Connection
+// Aapke Render Environment mein MONGODB_URI hona zaroori hai
+const mongoURI = process.env.MONGODB_URI || process.env.MONGO_URI;
 
 mongoose.connect(mongoURI)
     .then(() => console.log('✅ Connected to MongoDB Atlas Cloud'))
-    .catch(err => console.error('❌ Database connection error:', err));
+    .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// 3. SAMPLE ROUTE (Adjust based on your actual routes.js)
-const noteSchema = new mongoose.Schema({
-    title: String,
-    content: String,
-    role: String,
-    date: { type: Date, default: Date.now }
-});
-const Note = mongoose.model('Note', noteSchema);
-
-app.get('/api/notes', async (req, res) => {
-    try {
-        const notes = await Note.find();
-        res.json(notes);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
+// Routes (Example)
+app.get('/', (req, res) => {
+    res.send('School Notes API is running...');
 });
 
-// 4. START SERVER (Required for Render)
-const PORT = process.env.PORT || 3000;
+// Yahan apne baki routes (Auth aur Notes) ko import ya define karein
+// app.use('/api/auth', require('./routes/auth'));
+// app.use('/api/notes', require('./routes/notes'));
+
 app.listen(PORT, () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
+    console.log(`🚀 Server is live on port ${PORT}`);
 });
