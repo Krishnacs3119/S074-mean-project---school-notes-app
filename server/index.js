@@ -19,11 +19,11 @@ app.get('/', (req, res) => {
     res.send('School Notes API is running');
 });
 
-// API Routes
+// API routes
 const routes = require('./routes');
 app.use('/api', routes);
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`Server is live on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });

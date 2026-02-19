@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const User = require('./models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+
+const User = require('./models/User');
+const Note = require('./models/Note');
+
 
 // ================= REGISTER =================
 router.post('/register', async (req, res) => {
@@ -32,6 +35,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
+
 // ================= LOGIN =================
 router.post('/login', async (req, res) => {
     try {
@@ -55,11 +59,43 @@ router.post('/login', async (req, res) => {
 
         res.json({
             token,
-            role: user.role
+            role: user.role,
+            email: user.email
         });
 
     } catch (error) {
         console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+
+// ================= GET ALL NOTES =================
+router.get('/notes', async (req, res) => {
+    try {
+        const notes = await Note.find();
+        res.json(notes);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+
+// ================= CREATE NOTE =================
+router.post('/notes', async (req, res) => {
+    try {
+        const { title, content } = req.body;
+
+        const newNote = new Note({
+            title,
+            content
+        });
+
+        await newNote.save();
+
+        res.status(201).json(newNote);
+
+    } catch (error) {
         res.status(500).json({ message: 'Server error' });
     }
 });
