@@ -1,79 +1,100 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { CommonModule } from '@angular/common'; // ngIf aur ngFor ke liye
-import { FormsModule } from '@angular/forms'; // ngModel ke liye
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-notes',
-  standalone: true, // Standalone component setting
-  imports: [CommonModule, FormsModule, HttpClientModule], // Zaroori modules
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './notes.html',
-  styleUrls: ['./notes.css']
+  styleUrl: './notes.css'
 })
 export class NotesComponent implements OnInit {
-  // Aapka live Render backend API URL
-  private apiUrl = 'https://school-notes-api.onrender.com/api/notes';
-  
-  notes: any[] = [];
-  
-  // Template ke liye missing variables jo AI ne bataye the
-  currentUser: any = { username: 'Krishna', role: 'student' }; 
-  editingId: string | null = null;
-  noteData = { title: '', content: '', isShared: false };
 
-  constructor(private http: HttpClient) {}
+  currentUser: any = null;
+  notes: any[] = [];
+
+  noteData = {
+    title: '',
+    content: '',
+    isShared: false
+  };
+
+  editingId: string | null = null;
+
+  private baseUrl = 'https://school-notes-api.onrender.com/api';
+
+  constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit() {
-    this.fetchNotes();
+    const storedUser = localStorage.getItem('user');
+
+    if (!storedUser) {
+      this.router.navigate(['/']);
+      return;
+    }
+
+    this.currentUser = JSON.parse(storedUser);
+    this.loadNotes();
   }
 
-  // Database se notes fetch karne ke liye
-  fetchNotes() {
-    this.http.get<any[]>(this.apiUrl).subscribe({
+  loadNotes() {
+    this.http.get<any[]>(`${this.baseUrl}/notes`).subscribe({
       next: (data) => this.notes = data,
-      error: (err) => console.error('Error fetching notes:', err)
+      error: () => console.error('Error loading notes')
     });
   }
 
-  // Note save ya update karne ke liye
   submitNote() {
-    if (this.noteData.title && this.noteData.content) {
-      if (this.editingId) {
-        // Update logic
-        this.http.put(`${this.apiUrl}/${this.editingId}`, this.noteData).subscribe(() => {
-          this.fetchNotes();
-          this.resetForm();
-        });
-      } else {
-        // Add logic
-        this.http.post(this.apiUrl, this.noteData).subscribe(() => {
-          this.fetchNotes();
-          this.resetForm();
-        });
-      }
-    }
-  }
 
-  deleteNote(id: string) {
-    this.http.delete(`${this.apiUrl}/${id}`).subscribe(() => this.fetchNotes());
+    if (this.editingId) {
+      this.http.put(`${this.baseUrl}/notes/${this.editingId}`, {
+        ...this.noteData,
+        createdBy: this.currentUser.email
+      }).subscribe(() => {
+        this.resetForm();
+        this.loadNotes();
+      });
+
+    } else {
+      this.http.post(`${this.baseUrl}/notes`, {
+        ...this.noteData,
+        createdBy: this.currentUser.email
+      }).subscribe(() => {
+        this.resetForm();
+        this.loadNotes();
+      });
+    }
   }
 
   startEditing(note: any) {
     this.editingId = note._id;
-    this.noteData = { 
-      title: note.title, 
-      content: note.content, 
-      isShared: !!note.isShared 
+    this.noteData = {
+      title: note.title,
+      content: note.content,
+      isShared: note.isShared
     };
+  }
+
+  deleteNote(id: string) {
+    this.http.delete(`${this.baseUrl}/notes/${id}`).subscribe(() => {
+      this.loadNotes();
+    });
   }
 
   resetForm() {
     this.editingId = null;
-    this.noteData = { title: '', content: '', isShared: false };
+    this.noteData = {
+      title: '',
+      content: '',
+      isShared: false
+    };
   }
 
   logout() {
-    console.log('User logging out...');
-    // Yahan aap redirect ka logic bhi dal sakte hain
+    localStorage.removeItem('user');
+    this.router.navigate(['/']);
   }
 }

@@ -25,7 +25,7 @@ export class LoginComponent {
     if (this.isRegistering) {
 
       const user = {
-        email: this.username,   // map username to email
+        email: this.username,
         password: this.password,
         role: this.role
       };
@@ -47,7 +47,13 @@ export class LoginComponent {
 
       this.apiService.login(credentials).subscribe({
         next: (res: any) => {
+
+          // Clear old user first
+          localStorage.removeItem('user');
+
+          // Save new user
           localStorage.setItem('user', JSON.stringify(res));
+
           this.router.navigate(['/notes']);
         },
         error: () => alert('Invalid credentials')
