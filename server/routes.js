@@ -1,87 +1,70 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+// Model Import (Dhyan dein: hum ./models/User use kar rahe hain)
 const User = require('./models/User');
-const Note = require('./models/Note');
-const cors = require('cors');
 
-// --- AUTHENTICATION (LOGIN & REGISTER) ---
+const JWT_SECRET = process.env.JWT_SECRET || 'secret123';
 
-// Register
+// Register Route
 router.post('/register', async (req, res) => {
-  try {
-    const newUser = new User(req.body);
-    await newUser.save();
-    res.json(newUser);
-  } catch (error) {
-    res.status(500).json({ error: 'Error registering user' });
-  }
+    try {
+        const { email, password, role } = req.body;
+        
+        // Check agar user pehle se hai
+        let user = await User.findOne({ email });
+        if (user) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
+
+        // Password encrypt karna
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Naya user banana
+        user = new User({
+            email,
+            password: hashedPassword,
+            role: role || 'Student'
+        });
+
+        await user.save();
+        res.status(201).json({ message: 'User registered successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
 });
 
-// Login
+// Login Route
 router.post('/login', async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    const user = await User.findOne({ username, password });
-    if (user) {
-      res.json(user);
-    } else {
-      res.status(401).json({ message: 'Invalid credentials' });
+    try {
+        const { email, password } = req.body;
+
+        // User dhoondna
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
+
+        // Password match karna
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
+
+        // Token banana
+        const token = jwt.sign(
+            { id: user._id, role: user.role },
+            JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        res.json({ token, role: user.role });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
     }
-  } catch (error) {
-    res.status(500).json({ error: 'Error logging in' });
-  }
-});
-
-// --- NOTES OPERATIONS ---
-
-// Create a Note
-router.post('/notes', async (req, res) => {
-  try {
-    const note = new Note(req.body);
-    await note.save();
-    res.json(note);
-  } catch (error) {
-    res.status(500).json({ error: 'Error creating note' });
-  }
-});
-
-// Get Notes
-router.get('/notes', async (req, res) => {
-  try {
-    const role = req.query.role;
-    if (role === 'student') {
-      const notes = await Note.find({ 
-        $or: [ { isShared: true }, { isShared: "true" } ] 
-      });
-      res.json(notes);
-    } else {
-      const notes = await Note.find();
-      res.json(notes);
-    }
-  } catch (error) {
-    res.status(500).json({ error: 'Error fetching notes' });
-  }
-});
-
-// NEW: Update (Edit) a Note
-router.put('/notes/:id', async (req, res) => {
-  try {
-    // This finds the note by ID and updates it with the new data
-    const updatedNote = await Note.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.json(updatedNote);
-  } catch (error) {
-    res.status(500).json({ error: 'Error updating note' });
-  }
-});
-
-// Delete Note
-router.delete('/notes/:id', async (req, res) => {
-  try {
-    await Note.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Note deleted' });
-  } catch (error) {
-    res.status(500).json({ error: 'Error deleting note' });
-  }
 });
 
 module.exports = router;
