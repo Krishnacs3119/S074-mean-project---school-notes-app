@@ -91,4 +91,26 @@ router.put('/notes/:id', async (req, res) => {
       req.params.id,
       req.body,
       { new: true }
-    )
+    );
+
+    res.json(updated);
+
+  } catch (error) {
+    res.status(500).json({ message: "Error updating note" });
+  }
+});
+
+/* =========================
+   DELETE NOTE
+========================= */
+router.delete('/notes/:id', async (req, res) => {
+  try {
+    await Note.findByIdAndDelete(req.params.id);
+    res.json({ message: "Deleted successfully" });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting note" });
+  }
+});
+
+module.exports = router;
