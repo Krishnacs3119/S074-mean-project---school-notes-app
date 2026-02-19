@@ -23,7 +23,7 @@ export class LoginComponent {
     if (this.isRegistering) {
       // REGISTER LOGIC
       const user = { username: this.username, password: this.password, role: this.role };
-      this.http.post('http://localhost:3000/api/register', user).subscribe({
+      this.http.post('https://school-notes-api.onrender.com', user).subscribe({
         next: (res) => {
           alert('Registered! Now please login.');
           this.isRegistering = false; 
@@ -33,7 +33,7 @@ export class LoginComponent {
     } else {
       // LOGIN LOGIC
       const credentials = { username: this.username, password: this.password };
-      this.http.post('http://localhost:3000/api/login', credentials).subscribe({
+      this.http.post('https://school-notes-api.onrender.com', credentials).subscribe({
         next: (res: any) => {
           localStorage.setItem('user', JSON.stringify(res));
           this.router.navigate(['/notes']);
