@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ApiService } from '../api';   // 👈 IMPORT THIS
+import { ApiService } from '../api';
 
 @Component({
   selector: 'app-login',
@@ -13,7 +13,7 @@ import { ApiService } from '../api';   // 👈 IMPORT THIS
 })
 export class LoginComponent {
 
-  email = '';
+  username = '';
   password = '';
   role = 'student';
   isRegistering = false;
@@ -23,8 +23,9 @@ export class LoginComponent {
   authenticate() {
 
     if (this.isRegistering) {
+
       const user = {
-        email: this.email,
+        email: this.username,   // map username to email
         password: this.password,
         role: this.role
       };
@@ -38,8 +39,9 @@ export class LoginComponent {
       });
 
     } else {
+
       const credentials = {
-        email: this.email,
+        email: this.username,
         password: this.password
       };
 
