@@ -11,11 +11,27 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  register(userData: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/register`, userData);
+  register(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/register`, data);
   }
 
-  login(credentials: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/login`, credentials);
+  login(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/login`, data);
+  }
+
+  getNotes(role: string, username: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/notes?role=${role}&username=${username}`);
+  }
+
+  addNote(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/notes`, data);
+  }
+
+  updateNote(id: string, data: any): Observable<any> {
+    return this.http.put(`${this.baseUrl}/notes/${id}`, data);
+  }
+
+  deleteNote(id: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/notes/${id}`);
   }
 }

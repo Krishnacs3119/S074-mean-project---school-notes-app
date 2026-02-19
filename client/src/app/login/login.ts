@@ -25,14 +25,14 @@ export class LoginComponent {
     if (this.isRegistering) {
 
       const user = {
-        email: this.username,
+        username: this.username,
         password: this.password,
         role: this.role
       };
 
       this.apiService.register(user).subscribe({
         next: () => {
-          alert('Registered! Now please login.');
+          alert('Registered! Now login.');
           this.isRegistering = false;
         },
         error: () => alert('Error registering')
@@ -41,17 +41,14 @@ export class LoginComponent {
     } else {
 
       const credentials = {
-        email: this.username,
+        username: this.username,
         password: this.password
       };
 
       this.apiService.login(credentials).subscribe({
         next: (res: any) => {
 
-          // Clear old user first
           localStorage.removeItem('user');
-
-          // Save new user
           localStorage.setItem('user', JSON.stringify(res));
 
           this.router.navigate(['/notes']);

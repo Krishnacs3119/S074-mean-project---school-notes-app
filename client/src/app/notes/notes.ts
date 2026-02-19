@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { ApiService } from '../api';
 
 @Component({
   selector: 'app-notes',
@@ -13,7 +13,7 @@ import { HttpClient } from '@angular/common/http';
 })
 export class NotesComponent implements OnInit {
 
-  currentUser: any = null;
+  currentUser: any;
   notes: any[] = [];
 
   noteData = {
@@ -24,11 +24,10 @@ export class NotesComponent implements OnInit {
 
   editingId: string | null = null;
 
-  private baseUrl = 'https://school-notes-api.onrender.com/api';
-
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private apiService: ApiService, private router: Router) {}
 
   ngOnInit() {
+
     const storedUser = localStorage.getItem('user');
 
     if (!storedUser) {
@@ -41,31 +40,36 @@ export class NotesComponent implements OnInit {
   }
 
   loadNotes() {
-    this.http.get<any[]>(`${this.baseUrl}/notes`).subscribe({
-      next: (data) => this.notes = data,
-      error: () => console.error('Error loading notes')
-    });
+    this.apiService.getNotes(this.currentUser.role, this.currentUser.username)
+      .subscribe((data: any) => {
+        this.notes = data;
+      });
   }
 
   submitNote() {
 
+    const notePayload = {
+      title: this.noteData.title,
+      content: this.noteData.content,
+      isShared: this.noteData.isShared,
+      createdBy: this.currentUser.username
+    };
+
     if (this.editingId) {
-      this.http.put(`${this.baseUrl}/notes/${this.editingId}`, {
-        ...this.noteData,
-        createdBy: this.currentUser.email
-      }).subscribe(() => {
-        this.resetForm();
-        this.loadNotes();
-      });
+
+      this.apiService.updateNote(this.editingId, notePayload)
+        .subscribe(() => {
+          this.resetForm();
+          this.loadNotes();
+        });
 
     } else {
-      this.http.post(`${this.baseUrl}/notes`, {
-        ...this.noteData,
-        createdBy: this.currentUser.email
-      }).subscribe(() => {
-        this.resetForm();
-        this.loadNotes();
-      });
+
+      this.apiService.addNote(notePayload)
+        .subscribe(() => {
+          this.resetForm();
+          this.loadNotes();
+        });
     }
   }
 
@@ -79,9 +83,10 @@ export class NotesComponent implements OnInit {
   }
 
   deleteNote(id: string) {
-    this.http.delete(`${this.baseUrl}/notes/${id}`).subscribe(() => {
-      this.loadNotes();
-    });
+    this.apiService.deleteNote(id)
+      .subscribe(() => {
+        this.loadNotes();
+      });
   }
 
   resetForm() {

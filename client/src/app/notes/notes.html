@@ -1,41 +1,47 @@
 <div class="container">
+
   <header>
     <h1>Welcome, {{ currentUser?.username }} ({{ currentUser?.role }})</h1>
     <button (click)="logout()" class="logout-btn">Logout</button>
   </header>
 
   <div *ngIf="currentUser?.role === 'teacher'" class="add-note-box">
-    <h3>{{ editingId ? 'Edit Your Note' : 'Add a New Note' }}</h3>
-    
+
+    <h3>{{ editingId ? 'Edit Note' : 'Add New Note' }}</h3>
+
     <input [(ngModel)]="noteData.title" placeholder="Title" />
     <textarea [(ngModel)]="noteData.content" placeholder="Content"></textarea>
-    
-    <div class="action-row">
-      <label class="checkbox-container">
-        <input type="checkbox" [(ngModel)]="noteData.isShared" /> 
-        Share with Students?
-      </label>
-      
-      <button (click)="submitNote()" [style.background]="editingId ? 'orange' : '#007bff'">
-        {{ editingId ? 'Update Note' : 'Post Note' }}
-      </button>
-      
-      <button *ngIf="editingId" (click)="resetForm()" style="background: grey; margin-left: 10px;">
-        Cancel
-      </button>
-    </div>
+
+    <label>
+      <input type="checkbox" [(ngModel)]="noteData.isShared" />
+      Share with Students?
+    </label>
+
+    <button (click)="submitNote()">
+      {{ editingId ? 'Update Note' : 'Post Note' }}
+    </button>
+
   </div>
 
   <div class="notes-list">
-    <div *ngFor="let note of notes" class="note-card" [class.shared]="note.isShared">
+
+    <div *ngFor="let note of notes" class="note-card">
+
       <h3>{{ note.title }}</h3>
       <p>{{ note.content }}</p>
-      <small>By: {{ note.createdBy }} | {{ note.isShared ? 'Shared w/ Students' : 'Private' }}</small>
-      
-      <div *ngIf="currentUser?.role === 'teacher'" class="card-buttons">
-        <button (click)="startEditing(note)" class="edit-btn">Edit</button>
-        <button (click)="deleteNote(note._id)" class="delete-btn">Delete</button>
+
+      <small>
+        By: {{ note.createdBy }} |
+        {{ note.isShared ? 'Shared' : 'Private' }}
+      </small>
+
+      <div *ngIf="currentUser?.role === 'teacher'">
+        <button (click)="startEditing(note)">Edit</button>
+        <button (click)="deleteNote(note._id)">Delete</button>
       </div>
+
     </div>
+
   </div>
+
 </div>
