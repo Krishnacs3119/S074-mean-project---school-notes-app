@@ -1,116 +1,69 @@
 const express = require('express');
 const router = express.Router();
-const Note = require('./models/Note');
 const User = require('./models/User');
+const Note = require('./models/Note');
 
-/* =========================
-   REGISTER
-========================= */
+// REGISTER
 router.post('/register', async (req, res) => {
-  try {
-    const { email, password, role } = req.body;
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser)
-      return res.status(400).json({ message: "User already exists" });
+  const { username, password, role } = req.body;
 
-    const newUser = new User({ email, password, role });
-    await newUser.save();
+  const existing = await User.findOne({ username });
+  if (existing) return res.status(400).json({ message: 'User exists' });
 
-    res.status(201).json({ message: "User registered successfully" });
+  const user = new User({ username, password, role });
+  await user.save();
 
-  } catch (error) {
-    res.status(500).json({ message: "Registration error" });
-  }
+  res.status(201).json({ message: 'Registered' });
 });
 
-/* =========================
-   LOGIN
-========================= */
+// LOGIN
 router.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
 
-    const user = await User.findOne({ email, password });
+  const { username, password } = req.body;
 
-    if (!user)
-      return res.status(400).json({ message: "Invalid credentials" });
+  const user = await User.findOne({ username, password });
 
-    res.json({
-      email: user.email,
-      role: user.role
-    });
+  if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
-  } catch (error) {
-    res.status(500).json({ message: "Login error" });
-  }
+  res.json(user);
 });
 
-/* =========================
-   GET NOTES (ROLE BASED)
-========================= */
+// GET NOTES
 router.get('/notes', async (req, res) => {
-  try {
-    const { role, email } = req.query;
 
-    let notes;
+  const { role, username } = req.query;
 
-    if (role === 'teacher') {
-      notes = await Note.find({ createdBy: email });
-    } else {
-      notes = await Note.find({ isShared: true });
-    }
-
-    res.json(notes);
-
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching notes" });
+  if (role === 'teacher') {
+    const notes = await Note.find({ createdBy: username });
+    return res.json(notes);
   }
+
+  const notes = await Note.find({ isShared: true });
+  res.json(notes);
 });
 
-/* =========================
-   CREATE NOTE
-========================= */
+// ADD NOTE
 router.post('/notes', async (req, res) => {
-  try {
-    const note = new Note(req.body);
-    await note.save();
-    res.status(201).json(note);
 
-  } catch (error) {
-    res.status(500).json({ message: "Error creating note" });
-  }
+  const note = new Note(req.body);
+  await note.save();
+
+  res.status(201).json(note);
 });
 
-/* =========================
-   UPDATE NOTE
-========================= */
+// UPDATE NOTE
 router.put('/notes/:id', async (req, res) => {
-  try {
-    const updated = await Note.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
 
-    res.json(updated);
-
-  } catch (error) {
-    res.status(500).json({ message: "Error updating note" });
-  }
+  await Note.findByIdAndUpdate(req.params.id, req.body);
+  res.json({ message: 'Updated' });
 });
 
-/* =========================
-   DELETE NOTE
-========================= */
+// DELETE NOTE
 router.delete('/notes/:id', async (req, res) => {
-  try {
-    await Note.findByIdAndDelete(req.params.id);
-    res.json({ message: "Deleted successfully" });
 
-  } catch (error) {
-    res.status(500).json({ message: "Error deleting note" });
-  }
+  await Note.findByIdAndDelete(req.params.id);
+  res.json({ message: 'Deleted' });
 });
 
 module.exports = router;
