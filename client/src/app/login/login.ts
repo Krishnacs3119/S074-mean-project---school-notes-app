@@ -13,7 +13,7 @@ import { ApiService } from '../api';
 })
 export class LoginComponent {
 
-  username = '';
+  email = '';
   password = '';
   role = 'student';
   isRegistering = false;
@@ -21,39 +21,41 @@ export class LoginComponent {
   constructor(private apiService: ApiService, private router: Router) {}
 
   authenticate() {
-
     if (this.isRegistering) {
-
       const user = {
-        username: this.username,
+        email: this.email, 
         password: this.password,
         role: this.role
       };
 
       this.apiService.register(user).subscribe({
         next: () => {
-          alert('Registered! Now login.');
+          alert('Registered successfully! Now please login.');
           this.isRegistering = false;
+          this.password = ''; // Clears the password box for login
         },
-        error: () => alert('Error registering')
+        error: (err) => {
+          console.error(err);
+          alert('Registration Error: This email might already exist.');
+        }
       });
 
     } else {
-
       const credentials = {
-        username: this.username,
+        email: this.email, 
         password: this.password
       };
 
       this.apiService.login(credentials).subscribe({
         next: (res: any) => {
-
           localStorage.removeItem('user');
           localStorage.setItem('user', JSON.stringify(res));
-
           this.router.navigate(['/notes']);
         },
-        error: () => alert('Invalid credentials')
+        error: (err) => {
+          console.error(err);
+          alert('Invalid credentials. Please check your email and password.');
+        }
       });
     }
   }

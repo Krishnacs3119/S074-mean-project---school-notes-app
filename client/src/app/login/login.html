@@ -2,7 +2,7 @@
   <div class="card">
     <h2>{{ isRegistering ? 'Register' : 'Login' }}</h2>
     
-    <input type="text" [(ngModel)]="username" placeholder="Username" />
+    <input type="email" [(ngModel)]="email" placeholder="Email" />
     <input type="password" [(ngModel)]="password" placeholder="Password" />
     
     <select *ngIf="isRegistering" [(ngModel)]="role">

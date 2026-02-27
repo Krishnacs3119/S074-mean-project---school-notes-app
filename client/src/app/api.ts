@@ -19,8 +19,8 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/login`, data);
   }
 
-  getNotes(role: string, username: string): Observable<any> {
-    return this.http.get(`${this.baseUrl}/notes?role=${role}&username=${username}`);
+  getNotes(role: string, email: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/notes?role=${role}&email=${email}`);
   }
 
   addNote(data: any): Observable<any> {
